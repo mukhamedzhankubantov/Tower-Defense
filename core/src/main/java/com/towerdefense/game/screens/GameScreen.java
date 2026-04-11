@@ -4,6 +4,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.towerdefense.game.TowerDefenseGame;
+import com.towerdefense.game.core.GameEngine;
 
 public class GameScreen implements Screen {
 
@@ -18,8 +19,16 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         ScreenUtils.clear(0.1f, 0.1f, 0.1f, 1f);
+
+        // Singleton арқылы GameEngine-ге қол жеткіземіз
+        GameEngine engine = GameEngine.getInstance();
+
+        if (engine.isGameOver()) {
+            // кейін GameOverScreen қосамыз
+            System.out.println("Game Over!");
+        }
+
         batch.begin();
-        // кейін мұнда карта, мұнаралар,дұшпандар салынады
         batch.end();
     }
 
