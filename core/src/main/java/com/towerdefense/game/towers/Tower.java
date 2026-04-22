@@ -1,6 +1,8 @@
 package com.towerdefense.game.towers;
 
-public abstract class Tower {
+import com.towerdefense.game.composite.TowerComponent;
+
+public abstract class Tower implements TowerComponent {
 
     protected String name;
     protected int damage;
