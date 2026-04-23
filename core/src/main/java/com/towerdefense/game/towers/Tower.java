@@ -1,6 +1,9 @@
 package com.towerdefense.game.towers;
 
 import com.towerdefense.game.composite.TowerComponent;
+import com.towerdefense.game.enemies.Enemy;
+import com.towerdefense.game.strategies.AttackStrategy;
+import java.util.List;
 
 public abstract class Tower implements TowerComponent {
 
@@ -9,6 +12,18 @@ public abstract class Tower implements TowerComponent {
     protected float range;
     protected int cost;
     protected float attackSpeed;
+
+    private AttackStrategy attackStrategy;
+
+    public void setAttackStrategy(AttackStrategy strategy) {
+        this.attackStrategy = strategy;
+    }
+
+    public void performAttack(List<Enemy> enemiesInRange) {
+        if (attackStrategy != null) {
+            attackStrategy.execute(enemiesInRange);
+        }
+    }
 
     public abstract void attack();
 
