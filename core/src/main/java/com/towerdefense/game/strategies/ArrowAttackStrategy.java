@@ -11,6 +11,6 @@ public class ArrowAttackStrategy implements AttackStrategy {
     public void execute(List<Enemy> enemiesInRange) {
         if (enemiesInRange.isEmpty()) return;
         Enemy target = enemiesInRange.get(0);
-        System.out.println("Arrow hits " + target.getName() + " for " + damage + " DMG");
+        target.takeDamage(damage);
     }
 }

@@ -10,7 +10,7 @@ public class CannonAttackStrategy implements AttackStrategy {
     @Override
     public void execute(List<Enemy> enemiesInRange) {
         for (Enemy enemy : enemiesInRange) {
-            System.out.println("Cannon hits " + enemy.getName() + " for " + damage + " DMG (splash)");
+            enemy.takeDamage(damage);
         }
     }
 }
