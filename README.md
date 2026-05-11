@@ -71,6 +71,3 @@ Useful Gradle tasks and flags included in this project:
 * `lwjgl3:jar`: builds application's runnable jar.
 * `lwjgl3:run`: starts the application.
 
-```
-
-```
