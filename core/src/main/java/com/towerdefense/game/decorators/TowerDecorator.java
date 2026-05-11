@@ -13,6 +13,9 @@ public abstract class TowerDecorator extends Tower {
         this.range = tower.getRange();
         this.cost = tower.getCost();
         this.attackSpeed = tower.getAttackSpeed();
+
+        // Ату логикасын да көшіріп аламыз!
+        this.setAttackStrategy(tower.getAttackStrategy());
     }
 
     @Override
