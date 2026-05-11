@@ -19,9 +19,13 @@ public abstract class Tower implements TowerComponent {
         this.attackStrategy = strategy;
     }
 
+    public AttackStrategy getAttackStrategy() {
+        return this.attackStrategy;
+    }
+
     public void performAttack(List<Enemy> enemiesInRange) {
         if (attackStrategy != null) {
-            attackStrategy.execute(enemiesInRange);
+            attackStrategy.execute(this, enemiesInRange);
         }
     }
 
@@ -29,7 +33,7 @@ public abstract class Tower implements TowerComponent {
 
     public String getInfo() {
         return name + " | DMG:" + damage + " | RNG:" + range
-                + " | SPD:" + attackSpeed + " | COST:" + cost + "g";
+            + " | SPD:" + attackSpeed + " | COST:" + cost + "g";
     }
 
     public String getName()       { return name; }

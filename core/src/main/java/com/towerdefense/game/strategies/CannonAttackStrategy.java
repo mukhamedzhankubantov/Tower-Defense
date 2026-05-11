@@ -1,16 +1,14 @@
 package com.towerdefense.game.strategies;
 
 import com.towerdefense.game.enemies.Enemy;
+import com.towerdefense.game.towers.Tower;
 import java.util.List;
 
 public class CannonAttackStrategy implements AttackStrategy {
-
-    private final int damage = 40;
-
     @Override
-    public void execute(List<Enemy> enemiesInRange) {
+    public void execute(Tower tower, List<Enemy> enemiesInRange) {
         for (Enemy enemy : enemiesInRange) {
-            enemy.takeDamage(damage);
+            enemy.takeDamage(tower.getDamage());
         }
     }
 }
