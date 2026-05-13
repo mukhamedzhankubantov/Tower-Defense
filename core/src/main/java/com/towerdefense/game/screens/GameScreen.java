@@ -63,6 +63,13 @@ public class GameScreen implements Screen, GameEventListener {
     private final List<ActiveEnemy> enemies = new ArrayList<>();
     private final List<Shot> shots = new ArrayList<>();
 
+    private int selectedTowerType = 1;
+    private PlacedTower selectedTower = null;
+    private boolean isPaused = false;
+
+    public boolean isPaused() { return isPaused; }
+    public void setPaused(boolean p) { isPaused = p; }
+
     public GameScreen(TowerDefenseGame game) {
         this.game = game;
         camera = new OrthographicCamera();
@@ -73,10 +80,13 @@ public class GameScreen implements Screen, GameEventListener {
         path = map.getPath();
     }
 
+    public int getSelectedTowerType() { return selectedTowerType; }
+    public void setSelectedTowerType(int type) { this.selectedTowerType = type; }
     public OrthographicCamera getCamera() { return camera; }
     public FitViewport getViewport() { return viewport; }
     public GameMap getMap() { return map; }
     public List<PlacedTower> getTowers() { return towers; }
     public List<ActiveEnemy> getEnemies() { return enemies; }
     public List<Shot> getShots() { return shots; }
+    public PlacedTower getSelectedTower() { return selectedTower; }
 }
