@@ -5,7 +5,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.towerdefense.game.core.GameEngine;
+import com.towerdefense.game.map.GameMap;
 
 public class GameRenderer {
     private final GameScreen screen;
@@ -39,6 +41,46 @@ public class GameRenderer {
 
         font = new BitmapFont();
         font.setColor(Color.WHITE);
+    }
+
+    public void render() {
+        ScreenUtils.clear(0.15f, 0.2f, 0.15f, 1f);
+        screen.getViewport().apply();
+        screen.getCamera().update();
+        batch.setProjectionMatrix(screen.getCamera().combined);
+        shapeRenderer.setProjectionMatrix(screen.getCamera().combined);
+
+        drawMap();
+        drawShadows();
+    }
+
+    private void drawMap() {
+        batch.begin();
+        for (int col = 0; col < GameMap.COLS; col++) {
+            for (int row = 0; row < GameMap.ROWS; row++) {
+                Texture tex = screen.getMap().isTileOnPath(col, row) ? pathTex : grassTex;
+                batch.draw(tex, col * GameMap.TILE_SIZE, row * GameMap.TILE_SIZE,
+                    GameMap.TILE_SIZE, GameMap.TILE_SIZE);
+            }
+        }
+        batch.end();
+    }
+
+    private void drawShadows() {
+        com.badlogic.gdx.Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.4f);
+
+        for (GameScreen.PlacedTower pt : screen.getTowers()) {
+            shapeRenderer.ellipse(pt.x - 20, pt.y - 25, 40, 15);
+        }
+
+        for (GameScreen.ActiveEnemy ae : screen.getEnemies()) {
+            shapeRenderer.ellipse(ae.x - 15, ae.y - 25, 30, 10);
+        }
+
+        shapeRenderer.end();
+        com.badlogic.gdx.Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
     }
 
     public void dispose() {
