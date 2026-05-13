@@ -70,6 +70,17 @@ public class GameScreen implements Screen, GameEventListener {
     public boolean isPaused() { return isPaused; }
     public void setPaused(boolean p) { isPaused = p; }
 
+    public void restartGame() {
+        engine.reset();
+        game.setScreen(new GameScreen(game));
+        this.dispose();
+    }
+
+    public void exitToMenu() {
+        game.setScreen(new MenuScreen(game));
+        this.dispose();
+    }
+
     public GameScreen(TowerDefenseGame game) {
         this.game = game;
         camera = new OrthographicCamera();
