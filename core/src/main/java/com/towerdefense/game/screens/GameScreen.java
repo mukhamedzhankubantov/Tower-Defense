@@ -131,6 +131,10 @@ public class GameScreen implements Screen, GameEventListener {
     @Override
     public void render(float delta) {
         inputHandler.handleInput();
+        if (game.getScreen() != this) {
+            return;
+        }
+
         update(delta);
         renderer.render();
     }
