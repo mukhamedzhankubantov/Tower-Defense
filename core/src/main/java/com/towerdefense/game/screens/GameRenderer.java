@@ -79,11 +79,11 @@ public class GameRenderer {
         shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.4f);
 
-        for (GameScreen.PlacedTower pt : screen.getTowers()) {
+        for (com.towerdefense.game.screens.GameScreen.PlacedTower pt : screen.getTowers()) {
             shapeRenderer.ellipse(pt.x - 20, pt.y - 25, 40, 15);
         }
 
-        for (GameScreen.ActiveEnemy ae : screen.getEnemies()) {
+        for (com.towerdefense.game.screens.GameScreen.ActiveEnemy ae : screen.getEnemies()) {
             shapeRenderer.ellipse(ae.x - 15, ae.y - 25, 30, 10);
         }
 
