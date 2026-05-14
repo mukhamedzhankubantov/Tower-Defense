@@ -12,6 +12,15 @@ import com.towerdefense.game.observers.WaveManager;
 import com.towerdefense.game.observers.GameEventListener;
 import com.towerdefense.game.towers.Tower;
 import com.badlogic.gdx.utils.Pool;
+import com.towerdefense.game.decorators.DoubleDamageDecorator;
+import com.towerdefense.game.decorators.RangeBoostDecorator;
+import com.towerdefense.game.decorators.SpeedBoostDecorator;
+import com.towerdefense.game.strategies.ArrowAttackStrategy;
+import com.towerdefense.game.strategies.CannonAttackStrategy;
+import com.towerdefense.game.strategies.IceAttackStrategy;
+import com.towerdefense.game.towers.ArrowTowerFactory;
+import com.towerdefense.game.towers.CannonTowerFactory;
+import com.towerdefense.game.towers.IceTowerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +76,11 @@ public class GameScreen implements Screen, GameEventListener {
     private PlacedTower selectedTower = null;
     private boolean isPaused = false;
 
+    private float spawnTimer = 0f;
+    private final float spawnInterval = 2f;
+    private int enemiesToSpawn = 0;
+    private boolean waveActive = false;
+
     public boolean isPaused() { return isPaused; }
     public void setPaused(boolean p) { isPaused = p; }
 
@@ -79,6 +93,76 @@ public class GameScreen implements Screen, GameEventListener {
     public void exitToMenu() {
         game.setScreen(new MenuScreen(game));
         this.dispose();
+    }
+
+    public void startWave() {
+        if (!waveActive) {
+            engine.nextWave();
+            enemiesToSpawn = 5 + engine.getWave() * 2;
+            waveActive = true;
+            waveManager.startNextWave();
+        }
+    }
+
+    public void upgradeSelectedTower(int upgradeType) {
+        if (selectedTower == null) return;
+        if (upgradeType == 4 && engine.getGold() >= 100) {
+            engine.spendGold(100);
+            selectedTower.tower = new DoubleDamageDecorator(selectedTower.tower);
+        } else if (upgradeType == 5 && engine.getGold() >= 75) {
+            engine.spendGold(75);
+            selectedTower.tower = new RangeBoostDecorator(selectedTower.tower);
+        } else if (upgradeType == 6 && engine.getGold() >= 100) {
+            engine.spendGold(100);
+            selectedTower.tower = new SpeedBoostDecorator(selectedTower.tower);
+        }
+    }
+
+    private void placeTower(int col, int row) {
+        if (col < 0 || col >= GameMap.COLS || row < 0 || row >= GameMap.ROWS) return;
+        if (map.isTileOnPath(col, row)) return;
+
+        Tower tower;
+        int cost;
+        if (selectedTowerType == 1) {
+            tower = new ArrowTowerFactory().createTower();
+            tower.setAttackStrategy(new ArrowAttackStrategy());
+            cost = 100;
+        } else if (selectedTowerType == 2) {
+            tower = new CannonTowerFactory().createTower();
+            tower.setAttackStrategy(new CannonAttackStrategy());
+            cost = 150;
+        } else {
+            tower = new IceTowerFactory().createTower();
+            tower.setAttackStrategy(new IceAttackStrategy());
+            cost = 125;
+        }
+
+        if (engine.getGold() >= cost) {
+            engine.spendGold(cost);
+            float wx = col * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+            float wy = row * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+            towers.add(new PlacedTower(tower, wx, wy));
+        }
+    }
+
+    public void processTouch(float wx, float wy) {
+        PlacedTower clicked = null;
+        for (PlacedTower pt : towers) {
+            if (Math.abs(pt.x - wx) <= 32 && Math.abs(pt.y - wy) <= 32) {
+                clicked = pt;
+                break;
+            }
+        }
+
+        if (clicked != null) {
+            selectedTower = (selectedTower == clicked) ? null : clicked;
+        } else {
+            selectedTower = null;
+            int col = (int) wx / GameMap.TILE_SIZE;
+            int row = (int) wy / GameMap.TILE_SIZE;
+            placeTower(col, row);
+        }
     }
 
     public GameScreen(TowerDefenseGame game) {
