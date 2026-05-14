@@ -314,6 +314,22 @@ public class GameScreen implements Screen, GameEventListener {
         this.renderer = new GameRenderer(this);
     }
 
+    @Override public void onWaveStarted(int waveNumber) {}
+    @Override public void onWaveCompleted(int waveNumber) { engine.addGold(50); }
+    @Override public void onEnemyReachedEnd(int damage) { engine.loseLife(); }
+    @Override public void onEnemyKilled(int reward) {}
+
+    @Override public void resize(int width, int height) { viewport.update(width, height); }
+    @Override public void show() {}
+    @Override public void hide() {}
+    @Override public void pause() {}
+    @Override public void resume() {}
+
+    @Override
+    public void dispose() {
+        renderer.dispose();
+    }
+
     public int getSelectedTowerType() { return selectedTowerType; }
     public void setSelectedTowerType(int type) { this.selectedTowerType = type; }
     public OrthographicCamera getCamera() { return camera; }
