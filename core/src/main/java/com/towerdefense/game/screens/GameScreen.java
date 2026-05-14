@@ -21,7 +21,11 @@ import com.towerdefense.game.strategies.IceAttackStrategy;
 import com.towerdefense.game.towers.ArrowTowerFactory;
 import com.towerdefense.game.towers.CannonTowerFactory;
 import com.towerdefense.game.towers.IceTowerFactory;
-
+import com.towerdefense.game.enemies.GoblinFactory;
+import com.towerdefense.game.enemies.OrcFactory;
+import com.towerdefense.game.enemies.BossFactory;
+import com.towerdefense.game.states.DeadState;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +76,11 @@ public class GameScreen implements Screen, GameEventListener {
     private final List<ActiveEnemy> enemies = new ArrayList<>();
     private final List<Shot> shots = new ArrayList<>();
 
+    private final Pool<Shot> shotPool = new Pool<Shot>() {
+        @Override
+        protected Shot newObject() { return new Shot(); }
+    };
+
     private int selectedTowerType = 1;
     private PlacedTower selectedTower = null;
     private boolean isPaused = false;
@@ -80,6 +89,9 @@ public class GameScreen implements Screen, GameEventListener {
     private final float spawnInterval = 2f;
     private int enemiesToSpawn = 0;
     private boolean waveActive = false;
+
+    private final PlayerInputHandler inputHandler;
+    private final GameRenderer renderer;
 
     public boolean isPaused() { return isPaused; }
     public void setPaused(boolean p) { isPaused = p; }
@@ -165,6 +177,130 @@ public class GameScreen implements Screen, GameEventListener {
         }
     }
 
+    @Override
+    public void render(float delta) {
+        inputHandler.handleInput();
+        update(delta);
+        renderer.render();
+    }
+
+    private void update(float delta) {
+        if (isPaused) return;
+        if (engine.isGameOver()) return;
+
+        if (waveActive) {
+            spawnTimer += delta;
+            if (spawnTimer >= spawnInterval && enemiesToSpawn > 0) {
+                spawnTimer = 0;
+                spawnEnemy();
+                enemiesToSpawn--;
+            }
+        }
+
+        Iterator<ActiveEnemy> it = enemies.iterator();
+        while (it.hasNext()) {
+            ActiveEnemy ae = it.next();
+            ae.enemy.update(delta);
+            boolean reached = moveEnemy(ae, delta);
+
+            if (reached) {
+                waveManager.notifyEnemyReachedEnd(ae.enemy.getBaseDamage());
+                it.remove();
+                continue;
+            }
+
+            for (PlacedTower pt : towers) {
+                pt.attackTimer += delta;
+                float cooldown = 1f / pt.tower.getAttackSpeed();
+                float dist = Vector2.dst(pt.x, pt.y, ae.x, ae.y);
+                if (dist <= pt.tower.getRange() && pt.attackTimer >= cooldown) {
+                    pt.attackTimer = 0f;
+                    List<Enemy> nearby = new ArrayList<>();
+                    nearby.add(ae.enemy);
+                    pt.tower.performAttack(nearby);
+
+                    Shot s = shotPool.obtain();
+                    int tType = pt.tower.getName().contains("Arrow") ? 1
+                        : pt.tower.getName().contains("Cannon") ? 2 : 3;
+                    s.init(tType, pt.x, pt.y, ae.x, ae.y);
+                    shots.add(s);
+                }
+            }
+
+            if (ae.enemy.isDead()) {
+                ae.enemy.setState(new DeadState());
+                engine.addGold(ae.enemy.getReward());
+                waveManager.notifyEnemyKilled(ae.enemy.getReward());
+                it.remove();
+            }
+        }
+
+        if (waveActive && enemiesToSpawn == 0 && enemies.isEmpty()) {
+            waveActive = false;
+            waveManager.completeWave();
+            if (engine.getWave() >= 10) {
+                game.setScreen(new GameOverScreen(game, true));
+                return;
+            }
+        }
+
+        if (engine.isGameOver()) {
+            game.setScreen(new GameOverScreen(game, false));
+        }
+
+        Iterator<Shot> shotIt = shots.iterator();
+        while (shotIt.hasNext()) {
+            Shot s = shotIt.next();
+            s.timer -= delta;
+            if (s.timer <= 0) {
+                shotIt.remove();
+                shotPool.free(s);
+            }
+        }
+    }
+
+    private boolean moveEnemy(ActiveEnemy ae, float delta) {
+        if (ae.waypointIndex >= path.size()) return true;
+
+        Vector2 target = path.get(ae.waypointIndex);
+        float tx = target.x * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+        float ty = target.y * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+
+        float dx = tx - ae.x;
+        float dy = ty - ae.y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        float step = ae.enemy.getSpeed() * GameMap.TILE_SIZE * delta;
+
+        if (dist <= step) {
+            ae.x = tx; ae.y = ty;
+            ae.waypointIndex++;
+        } else {
+            ae.x += (dx / dist) * step;
+            ae.y += (dy / dist) * step;
+        }
+
+        return ae.waypointIndex >= path.size();
+    }
+
+    private void spawnEnemy() {
+        int wave = engine.getWave();
+        double r = Math.random();
+        Enemy enemy;
+        if (wave == 1) {
+            enemy = new GoblinFactory().createEnemy();
+        } else if (wave == 2) {
+            enemy = r < 0.6 ? new GoblinFactory().createEnemy() : new OrcFactory().createEnemy();
+        } else {
+            if (r < 0.3)      enemy = new GoblinFactory().createEnemy();
+            else if (r < 0.7) enemy = new OrcFactory().createEnemy();
+            else               enemy = new BossFactory().createEnemy();
+        }
+        Vector2 start = path.get(0);
+        float sx = start.x * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+        float sy = start.y * GameMap.TILE_SIZE + GameMap.TILE_SIZE / 2f;
+        enemies.add(new ActiveEnemy(enemy, sx, sy));
+    }
+
     public GameScreen(TowerDefenseGame game) {
         this.game = game;
         camera = new OrthographicCamera();
@@ -173,6 +309,9 @@ public class GameScreen implements Screen, GameEventListener {
         camera.update();
         waveManager.addListener(this);
         path = map.getPath();
+
+        this.inputHandler = new PlayerInputHandler(this);
+        this.renderer = new GameRenderer(this);
     }
 
     public int getSelectedTowerType() { return selectedTowerType; }
